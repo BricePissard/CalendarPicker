@@ -11,7 +11,7 @@ To use the calendar you just need to:
 
 How to use it:
 
-	var CalendarPicker = require('react-native-calendar-picker');
+	import CalendarPicker from 'react-native-calendar-picker';
 
 	var Calendar = React.createClass({
 	  getInitialState: function() {
@@ -25,20 +25,45 @@ How to use it:
 	  },
 
 	  render: function() {
+			var PreviousContent = <View><Text>Previous</Text></View>;
+			var NextContent = <View><Text>Next</Text></View>;
 	    return (
 	      <View style={styles.container}>
-	      
-	        <CalendarPicker 
-	          selectedDate={this.state.date}
-	          onDateChange={this.onDateChange} />
-
+	        <CalendarPicker
+	          style={styles.calendar}
+	          styleSelected={styles.calendarSelected}
+	          stylePast={styles.calendarPast}
+						selectedDate={this.state.date}
+	          onDateChange={this.onDateChange}
+	          hideWeekDays={false}
+						previousContent={PreviousContent}
+	          nextContent={NextContent}
+					/>		
 	        <Text style={styles.selectedDate}>Date:  { this.state.date.toString() } </Text>
 	      </View>
-	      
+
 	    );
 	  }
 	});
 
+	const styles = StyleSheet.create({
+		calendar: {
+	    backgroundColor: "#fff",
+	    paddingLeft: 10,
+	    paddingRight: 10,
+	    marginLeft: 25,
+	    marginRight: 25,
+	    borderWidth: 0
+	  },
+	  calendarSelected: {
+	    backgroundColor: "#0d81ec",
+	    borderRadius: 0,
+	    width: 48,
+	  },
+	  calendarPast: {
+	    backgroundColor: "#eaeaea"
+	  },
+	});
 
 # To Do:
 

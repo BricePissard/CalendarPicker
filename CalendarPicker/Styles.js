@@ -4,42 +4,47 @@
  */
 'use strict';
 
-var StyleSheet = require('react-native').StyleSheet;
+import React, { StyleSheet, Dimensions } from 'react-native';
 
-var {width, height,} = require('Dimensions').get('window'); 
+const window = Dimensions.get('window'),
+  DEVICE_HEIGHT = window.height,
+  DEVICE_WIDTH  = window.width,
+  CELL_WIDTH = (DEVICE_WIDTH/7) - 7;
+
 var styles = StyleSheet.create({
   calendar: {
     height: 320,
-    width: width,
-    marginTop: 10
+    marginTop: 10,
+    borderRadius: 4,
+    overflow: 'hidden'
   },
   dayWrapper: {
-    width: width/7,
-    height: width/7,
-    borderRadius: width/7/2,
+    width: CELL_WIDTH,
+    height: 40,
     backgroundColor: 'rgba(0,0,0,0.0)'
   },
 
   dayButton: {
-    width: width/7,
-    height: width/7,
-    borderRadius: width/7/2,
-    alignSelf: 'center',
-    justifyContent: 'center',
+    width: CELL_WIDTH,
+    height: 30,
+    paddingBottom:10,
+    alignSelf: 'center'
   },
 
   dayButtonSelected: {
-    width: width/7,
-    height: width/7,
-    borderRadius: width/7/2,
-    backgroundColor: '#D6BA79',
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#0d81ec',
     alignSelf: 'center'
   },
 
   dayLabel: {
     fontSize: 14,
-    color: '#000',
-    marginTop: 0,
+    color: '#444',
+    marginTop: 7,
+    marginBottom:4,
+    paddingBottom:5,
     alignSelf: 'center'
   },
 
@@ -52,7 +57,7 @@ var styles = StyleSheet.create({
     paddingBottom: 10,
     alignSelf: 'center',
     backgroundColor: 'rgba(0,0,0,0.0)',
-    borderColor: 'rgba(0,0,0,0.2)'
+    borderColor: 'rgba(0,0,0,0.15)'
   },
 
   daysWrapper: {
@@ -60,54 +65,68 @@ var styles = StyleSheet.create({
   },
 
   dayLabels: {
-    width: width/7,
+    width: CELL_WIDTH,
     fontSize: 10,
-    color: '#000',
+    color: '#444',
     textAlign: 'center',
   },
 
   selectedDay: {
-    width: width/7,
-    height: width/7,
-    backgroundColor: '#5ce600',
-    borderRadius: width/7/2,
+    width: CELL_WIDTH,
+    height:60,
+    backgroundColor: '#0d81ec',
+    borderRadius: 30,
+    overflow: 'hidden',
     alignSelf: 'center'
   },
 
   monthLabel: {
-    fontSize: 16,
-    color: '#000',
-    width: width/3,
+    fontSize: 19,
+    color: '#444',
+    width: 160,
     textAlign: 'center'
   },
 
   headerWrapper: {
-    alignItems: 'center',  
+    alignItems: 'center',
     flexDirection: 'row',
     alignSelf: 'center',
-    width: width,
     marginBottom: 10,
-    paddingHorizontal: 16,
+    padding: 5,
     paddingBottom: 3,
     backgroundColor: 'rgba(0,0,0,0.0)'
   },
 
   monthSelector: {
-    width: width/3 - 16,
+    width: 80,
+  },
+
+  todayPoint: {
+    width:4,
+    height:4,
+    backgroundColor: 'red',
+    position: 'relative',
+    top:-10,
+    right:-21,
+    borderRadius:20,
   },
 
   prev: {
-    textAlign: 'left'
+    fontSize: 12,
+    textAlign: 'left',
+    color: '#666',
   },
 
   next: {
-    textAlign: 'right'
+    fontSize: 12,
+    textAlign: 'right',
+    color: '#666',
   },
 
   yearLabel: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#000',
+    color: '#444',
     textAlign: 'center'
   },
 

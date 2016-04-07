@@ -24,6 +24,11 @@ var styles = require('./Styles');
 
 var Day = React.createClass({
   propTypes: {
+    today: React.PropTypes.instanceOf(Date),
+    date: React.PropTypes.instanceOf(Date),
+    currentDate: React.PropTypes.instanceOf(Date),
+    styleSelected: View.propTypes.style,
+    stylePast: View.propTypes.style,
     onDayChange: React.PropTypes.func,
     selected: React.PropTypes.bool,
     day: React.PropTypes.oneOfType([
@@ -37,16 +42,33 @@ var Day = React.createClass({
     }
   },
   render() {
+    var t = this.props.today,
+      oneDay = 24*60*60*1000,
+      c = this.props.currentDate,
+      tt = t.getDate()+t.getMonth()+t.getFullYear(),
+      cc = c.getDate()+c.getMonth()+c.getFullYear(),
+      isToday = tt == cc,
+      isThisMonth = t.getMonth() == c.getMonth(),
+      isPast = !isThisMonth && t-oneDay > c;
+    //console.log(c,t);
     if (this.props.selected) {
       return (
         <View style={styles.dayWrapper}>
-          <View style={styles.dayButtonSelected}>
+          <View style={[
+            ((!isPast)?styles.dayButtonSelected:null),
+            ((!isPast)?this.props.styleSelected:null)
+          ]}>
             <TouchableOpacity
-              style={styles.dayButton}
-              onPress={() => this.props.onDayChange(this.props.day) }>
-              <Text style={styles.dayLabel}>
+              style={[styles.dayButton,((isPast)? this.props.stylePast : null)]}
+              onPress={()=>this.props.onDayChange(this.props.day)}>
+              <Text style={[styles.dayLabel,{color:(!isPast)?'#fff':'#999'}]}>
                 {this.props.day}
               </Text>
+              {((isToday)?
+                <View style={[styles.todayPoint,{backgroundColor:'#fff'}]}/>
+                :
+                null
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -55,11 +77,16 @@ var Day = React.createClass({
       return (
         <View style={styles.dayWrapper}>
           <TouchableOpacity
-            style={styles.dayButton}
-            onPress={() => this.props.onDayChange(this.props.day) }>
-            <Text style={styles.dayLabel}>
+            style={[styles.dayButton,((isPast)? this.props.stylePast : null)]}
+            onPress={()=>(!isPast)?this.props.onDayChange(this.props.day):null}>
+            <Text style={[styles.dayLabel,(isPast)?{color:'#999'}:null]}>
               {this.props.day}
             </Text>
+            {((isToday && isThisMonth)?
+              <View style={[styles.todayPoint,{backgroundColor:'#0d81ec'}]}/>
+              :
+              null
+            )}
           </TouchableOpacity>
         </View>
       );
@@ -69,6 +96,8 @@ var Day = React.createClass({
 
 var Days = React.createClass({
   propTypes: {
+    styleSelected: View.propTypes.style,
+    stylePast: View.propTypes.style,
     date: React.PropTypes.instanceOf(Date).isRequired,
     month: React.PropTypes.number.isRequired,
     year: React.PropTypes.number.isRequired,
@@ -121,6 +150,7 @@ var Days = React.createClass({
       year = this.props.year,
       currentDay = 0,
       thisMonthFirstDay = new Date(year, month, 1),
+      today = new Date(),
       slotsAccumulator = 0;
 
     for(i = 0; i < MAX_ROWS; i++ ) { // Week rows
@@ -130,15 +160,25 @@ var Days = React.createClass({
         if (slotsAccumulator >= thisMonthFirstDay.getDay()) {
           if (currentDay < getDaysInMonth(month, year)) {
             columns.push(<Day
-                      key={j}
-                      day={currentDay+1}
-                      selected={this.state.selectedStates[currentDay]}
-                      date={this.props.date}
-                      onDayChange={this.onPressDay} />);
+              key={j}
+              today={today}
+              currentDate={new Date(year, month, currentDay+1)}
+              day={currentDay+1}
+              styleSelected={this.props.styleSelected}
+              stylePast={this.props.stylePast}
+              selected={this.state.selectedStates[currentDay]}
+              date={this.props.date}
+              onDayChange={this.onPressDay}
+            />);
             currentDay++;
           }
         } else {
-          columns.push(<Day key={j} day={''}/>);
+          columns.push(<Day
+            key={j}
+            today={today}
+            currentDate={new Date(year, month, currentDay+1)}
+            day={''}
+          />);
         }
 
         slotsAccumulator++;
@@ -157,10 +197,18 @@ var Days = React.createClass({
 });
 
 var WeekDaysLabels = React.createClass({
+  propTypes: {
+    hideWeekDays: React.PropTypes.bool,
+  },
   render() {
     return (
-      <View style={styles.dayLabelsWrapper}>
-        { WEEKDAYS.map((day, key) => { return <Text key={key} style={styles.dayLabels}>{day}</Text> }) }
+      <View style={[
+        styles.dayLabelsWrapper,
+        ((this.props.hideWeekDays===true)?{height:0}:'')
+      ]}>
+        {WEEKDAYS.map((day, key) => {
+          return <Text key={key} style={styles.dayLabels}>{day}</Text>
+        })}
       </View>
     );
   }
@@ -171,7 +219,9 @@ var HeaderControls = React.createClass({
     month: React.PropTypes.number.isRequired,
     getNextYear: React.PropTypes.func.isRequired,
     getPrevYear: React.PropTypes.func.isRequired,
-    onMonthChange: React.PropTypes.func.isRequired
+    onMonthChange: React.PropTypes.func.isRequired,
+    previousContent: React.PropTypes.element,
+    nextContent: React.PropTypes.element,
   },
   getInitialState() {
     return {
@@ -186,30 +236,25 @@ var HeaderControls = React.createClass({
   getNext() {
     var next = this.state.selectedMonth + 1;
     if (next > 11) {
-      this.setState({ selectedMonth: 0 },() => {
-        this.props.onMonthChange(this.state.selectedMonth);
-      });
+      this.setState({ selectedMonth: 0 });
       this.props.getNextYear();
     } else {
-      this.setState({ selectedMonth: next },() => {
-        this.props.onMonthChange(this.state.selectedMonth);
-      });
+      this.setState({ selectedMonth: next });
     }
+
+    this.props.onMonthChange(this.state.selectedMonth);
   },
 
   getPrevious() {
     var prev = this.state.selectedMonth - 1;
     if (prev < 0) {
-      this.setState({ selectedMonth: 11 },() => {
-        this.props.onMonthChange(this.state.selectedMonth);
-      });
+      this.setState({ selectedMonth: 11 });
       this.props.getPrevYear();
     } else {
-      this.setState({ selectedMonth: prev }, () => {
-        this.props.onMonthChange(this.state.selectedMonth);
-      });
+      this.setState({ selectedMonth: prev });
     }
 
+    this.props.onMonthChange(this.state.selectedMonth);
   },
 
   render() {
@@ -217,7 +262,11 @@ var HeaderControls = React.createClass({
       <View style={styles.headerWrapper}>
         <View style={styles.monthSelector}>
           <TouchableOpacity onPress={this.getPrevious}>
+          {((this.props.previousContent)?
+            this.props.previousContent
+            :
             <Text style={styles.prev}>Previous</Text>
+          )}
           </TouchableOpacity>
         </View>
         <View>
@@ -227,7 +276,11 @@ var HeaderControls = React.createClass({
         </View>
         <View style={styles.monthSelector}>
           <TouchableOpacity onPress={this.getNext}>
+          {((this.props.nextContent)?
+            this.props.nextContent
+            :
             <Text style={styles.next}>Next</Text>
+          )}
           </TouchableOpacity>
         </View>
 
@@ -238,8 +291,14 @@ var HeaderControls = React.createClass({
 
 var CalendarPicker = React.createClass({
   propTypes: {
+    style: View.propTypes.style,
+    styleSelected: View.propTypes.style,
+    stylePast: View.propTypes.style,
     selectedDate: React.PropTypes.instanceOf(Date).isRequired,
-    onDateChange: React.PropTypes.func
+    onDateChange: React.PropTypes.func,
+    previousContent: React.PropTypes.element,
+    nextContent: React.PropTypes.element,
+    hideWeekDays: React.PropTypes.bool,
   },
   getDefaultProps() {
     return {
@@ -257,27 +316,23 @@ var CalendarPicker = React.createClass({
   },
 
   onDayChange(day) {
-    this.setState({day: day.day,}, () => {
-      this.onDateChange();
-    });
+    this.setState({day: day.day,});
+    this.onDateChange();
   },
 
   onMonthChange(month) {
-    this.setState({month: month,}, () => {
-      this.onDateChange();
-    });
+    this.setState({month: month,});
+    this.onDateChange();
   },
 
   getNextYear(){
-    this.setState({year: this.state.year + 1,}, () => {
-      this.onDateChange();
-    });
+    this.setState({year: this.state.year + 1,});
+    this.onDateChange();
   },
 
   getPrevYear() {
-    this.setState({year: this.state.year - 1,}, () => {
-      this.onDateChange();
-    });
+    this.setState({year: this.state.year - 1,});
+    this.onDateChange();
   },
 
   onDateChange() {
@@ -288,28 +343,31 @@ var CalendarPicker = React.createClass({
     } = this.state,
       date = new Date(year, month, day);
 
-    this.setState({date: date,}, () => {
-      this.props.onDateChange(date);
-    });    
+    this.setState({date: date,});
+    this.props.onDateChange(date);
   },
 
   render() {
     return (
-      <View style={styles.calendar}>
+      <View style={[styles.calendar, this.props.style]}>
         <HeaderControls
           year= {this.state.year}
           month={this.state.month}
           onMonthChange={this.onMonthChange}
           getNextYear={this.getNextYear}
-          getPrevYear={this.getPrevYear} />
-
-        <WeekDaysLabels />
-
+          getPrevYear={this.getPrevYear}
+          previousContent={this.props.previousContent}
+          nextContent={this.props.nextContent}
+        />
+        <WeekDaysLabels hideWeekDays={this.props.hideWeekDays} />
         <Days
+          styleSelected={this.props.styleSelected}
+          stylePast={this.props.stylePast}
           month={this.state.month}
           year={this.state.year}
           date={this.state.date}
-          onDayChange={this.onDayChange} />
+          onDayChange={this.onDayChange}
+        />
       </View>
     );
   }
